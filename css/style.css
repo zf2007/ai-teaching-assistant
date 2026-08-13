@@ -506,30 +506,40 @@ body.dark .msg-bubble code { background: rgba(124,92,240,.22); color: #b9c6ff; }
 /* ============ 手机端（< 700px）============ */
 @media (max-width: 700px) {
   .sidebar { display: none; }
-  .mobile-nav { display: flex; }
-  .main { width: 100%; }
-  .app { display: block; }
+  .mobile-nav {
+    display: flex;
+    position: static;
+    height: calc(58px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    flex-shrink: 0;
+  }
+  .app { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+  .main { width: 100%; flex: 1; min-height: 0; display: flex; flex-direction: column; }
 
-  .topbar { height: 52px; padding: 0 12px; }
+  .topbar { height: 52px; padding: 0 12px; flex-shrink: 0; }
   .topbar-title { display: none; }
   .topbar-actions { width: 100%; justify-content: space-between; }
   .course-picker { flex: 1; justify-content: center; }
   .course-picker select { max-width: 46vw; }
 
-  /* 聊天页 */
+  .pages { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; min-height: 0; padding-bottom: 0; }
+  .page { height: auto; }
+
+  /* 聊天页：内部滚动 + 固定输入栏 */
+  #page-chat { height: calc(100vh - 52px - 58px - env(safe-area-inset-bottom, 0px)); }
   .chat-layout { height: 100%; }
   .chat-main { width: 100%; }
-  .chat-messages { padding: 16px 12px; gap: 14px; }
+  .chat-messages { padding: 14px 12px; gap: 14px; }
   .msg { max-width: 100%; }
   .msg-bubble { font-size: 14px; padding: 12px 14px; }
-  .chat-inputbar { padding: 10px 12px calc(10px + env(safe-area-inset-bottom, 0)); }
+  .chat-inputbar { padding: 10px 12px calc(10px + env(safe-area-inset-bottom, 0px)); }
   .suggestions { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 2px; }
   .chip { flex-shrink: 0; white-space: nowrap; }
   .input-hint { font-size: 10.5px; }
   .input-hint .rag-status { display: none; }
 
   /* 每日一题 */
-  .daily-layout { padding: 14px; gap: 14px; }
+  .daily-layout { padding: 14px; gap: 14px; height: auto; }
   .daily-card { padding: 16px; }
   .daily-head { flex-wrap: wrap; }
   .daily-head .btn { margin-left: 0; }
@@ -549,9 +559,5 @@ body.dark .msg-bubble code { background: rgba(124,92,240,.22); color: #b9c6ff; }
   /* 弹窗 */
   .modal { width: calc(100vw - 24px); max-height: 88vh; border-radius: 14px; }
   .modal-body { padding: 16px; }
-
-  /* 底部导航占位 */
-  .pages { padding-bottom: 58px; }
-  .chat-layout { padding-bottom: 0; }
 }
 
