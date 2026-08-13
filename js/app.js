@@ -104,7 +104,30 @@ const App = (function () {
     Knowledge.setCurrent(id);
     saveStore();
     updateCourseUI();
+    resetChat();
     renderAll();
+  }
+
+  /* 切换学科：重置聊天区，示例问题与 AI 自我介绍随学科变化 */
+  function resetChat() {
+    $("#chat-messages").innerHTML = "";
+    chatBusy = false;
+    updateSuggestions();
+    welcomeMessage();
+  }
+
+  /* 按当前学科生成示例问题 */
+  function updateSuggestions() {
+    const box = $("#suggestions");
+    if (!box) return;
+    const c = curCourse();
+    const examples = COURSE_EXAMPLES[c.id] || [
+      "什么是" + (c.topics[0] ? c.topics[0].name : "这门课") + "？",
+      "帮我讲讲这门课的重点",
+      "这门课有哪些易错点？",
+      "怎么复习这门课？"
+    ];
+    box.innerHTML = examples.map(q => `<button class="chip" data-q="${escapeHtml(q)}">${escapeHtml(q)}</button>`).join("");
   }
   function renderAll() {
     navigate(pageNow);
@@ -837,6 +860,7 @@ ${context || "（未检索到相关资料）"}`;
     applyTheme(savedDark);
     bindEvents();
     renderCoursePicker();
+    updateSuggestions();
     navigate("chat");
     renderDailyStats();
     updateTrialUI();
