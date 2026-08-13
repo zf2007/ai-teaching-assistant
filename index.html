@@ -1,0 +1,332 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<link rel="icon" href="data:,">
+<title>AI 智能助教 · 基于RAG技术的课程答疑助手</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="app">
+
+  <!-- ========== 侧边栏 ========== -->
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="brand-logo">AI</div>
+      <div class="brand-text">
+        <div class="brand-name">AI 智能助教</div>
+        <div class="brand-sub">RAG 课程答疑助手</div>
+      </div>
+    </div>
+
+    <nav class="nav" id="nav">
+      <button class="nav-item active" data-page="chat">
+        <span class="nav-icon">💬</span><span>AI 答疑</span>
+      </button>
+      <button class="nav-item" data-page="daily">
+        <span class="nav-icon">📅</span><span>每日一题</span>
+      </button>
+      <button class="nav-item" data-page="wrongbook">
+        <span class="nav-icon">📓</span><span>错题本</span><span class="nav-badge" id="wrongbook-badge" hidden>0</span>
+      </button>
+      <button class="nav-item" data-page="knowledge">
+        <span class="nav-icon">📚</span><span>课程知识库</span>
+      </button>
+      <button class="nav-item" data-page="report">
+        <span class="nav-icon">📊</span><span>学习报告</span>
+      </button>
+      <button class="nav-item" data-page="settings">
+        <span class="nav-icon">⚙️</span><span>设置</span>
+      </button>
+    </nav>
+
+    <div class="sidebar-bottom">
+      <div class="pro-card">
+        <div class="pro-title">✨ AI 助教 Pro</div>
+        <div class="pro-desc">无限问答 · 高级错题本 · 个性化学习计划</div>
+        <div class="trial-box" id="trial-box">
+          <div class="trial-text" id="trial-text">今日免费试用：5/5 次</div>
+          <div class="trial-track"><div class="trial-fill" id="trial-fill"></div></div>
+        </div>
+        <button class="pro-btn" id="pro-btn">¥9.9/月 升级</button>
+      </div>
+      <div class="user-card">
+        <div class="user-avatar">🎓</div>
+        <div class="user-info">
+          <div class="user-name">同学你好</div>
+          <div class="user-role">电气专业 · 大二</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ========== 主区域 ========== -->
+  <main class="main">
+
+    <!-- ========== 页头 ========== -->
+    <header class="topbar" id="topbar">
+      <div class="topbar-title" id="topbar-title">AI 答疑</div>
+      <div class="topbar-actions">
+        <div class="course-picker" title="切换课程">
+          <span class="cp-icon" id="course-icon">🧪</span>
+          <select id="course-select" aria-label="切换课程"></select>
+          <span class="course-dot"></span>
+        </div>
+        <button class="icon-btn" id="theme-btn" title="切换主题">🌙</button>
+      </div>
+    </header>
+
+    <!-- ========== 页面容器 ========== -->
+    <div class="pages">
+
+      <!-- ===== 页面：AI 答疑 ===== -->
+      <section class="page active" id="page-chat">
+        <div class="chat-layout">
+          <div class="chat-main">
+            <div class="chat-messages" id="chat-messages"></div>
+            <div class="chat-inputbar">
+              <div class="suggestions" id="suggestions">
+                <button class="chip" data-q="什么是基尔霍夫电压定律？">什么是基尔霍夫电压定律？</button>
+                <button class="chip" data-q="用戴维南定理求电路中的电流">戴维南定理怎么求电流？</button>
+                <button class="chip" data-q="RC电路的零输入响应怎么分析？">RC 电路零输入响应</button>
+                <button class="chip" data-q="串联谐振的条件是什么？">串联谐振条件</button>
+              </div>
+              <div class="input-row">
+                <textarea id="chat-input" rows="1" placeholder="输入你的课程问题，AI 助教 7×24 小时在线…（Enter 发送 / Shift+Enter 换行）"></textarea>
+                <button class="send-btn" id="send-btn" title="发送">➤</button>
+              </div>
+              <div class="input-hint">
+                <span>🔍 演示模式 · 本地 RAG 知识库检索</span>
+                <span class="rag-status"><span class="status-dot"></span>RAG 引擎在线</span>
+              </div>
+            </div>
+          </div>
+          <aside class="chat-side">
+            <div class="side-card" id="rag-card">
+              <div class="side-card-title">🧠 本次回答的 RAG 过程</div>
+              <div class="rag-flow" id="rag-flow">
+                <div class="rag-empty">向 AI 提问后，这里会展示「检索 → 增强 → 生成」的完整过程与引用来源。</div>
+              </div>
+            </div>
+            <div class="side-card">
+              <div class="side-card-title">📌 热门知识点</div>
+              <div class="hot-tags" id="hot-tags"></div>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <!-- ===== 页面：每日一题 ===== -->
+      <section class="page" id="page-daily">
+        <div class="daily-layout">
+          <div class="daily-card" id="daily-card">
+            <div class="daily-head">
+              <div class="daily-title">📅 每日一题</div>
+              <div class="daily-sub" id="daily-sub"></div>
+              <button class="btn ghost" id="daily-next">换一题 🔄</button>
+            </div>
+            <div class="daily-body" id="daily-body"></div>
+          </div>
+          <div class="daily-side">
+            <div class="side-card">
+              <div class="side-card-title">📈 答题记录</div>
+              <div class="daily-stats" id="daily-stats"></div>
+            </div>
+            <div class="side-card">
+              <div class="side-card-title">💡 易错提醒</div>
+              <div class="tip-text" id="daily-tip"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== 页面：错题本 ===== -->
+      <section class="page" id="page-wrongbook">
+        <div class="wb-head">
+          <div class="page-title">📓 错题本</div>
+          <button class="btn primary" id="wb-add-btn">＋ 添加错题</button>
+        </div>
+        <div class="wb-grid" id="wb-grid"></div>
+        <div class="wb-empty" id="wb-empty" hidden>
+          <div class="empty-icon">📭</div>
+          <div>还没有错题记录。做错的题拍照或录入进来，AI 会自动收录并推荐相似题～</div>
+          <button class="btn primary" id="wb-empty-add">＋ 添加第一道错题</button>
+        </div>
+      </section>
+
+      <!-- ===== 页面：课程知识库 ===== -->
+      <section class="page" id="page-knowledge">
+        <div class="kb-head">
+          <div class="page-title">📚 课程知识库</div>
+          <div class="kb-search">
+            <input type="text" id="kb-search" placeholder="搜索知识点 / 概念 / 公式…">
+          </div>
+        </div>
+        <div class="kb-stats" id="kb-stats"></div>
+        <div class="kb-grid" id="kb-grid"></div>
+      </section>
+
+      <!-- ===== 页面：学习报告 ===== -->
+      <section class="page" id="page-report">
+        <div class="report-grid" id="report-grid"></div>
+        <div class="report-charts">
+          <div class="side-card chart-card">
+            <div class="side-card-title">📊 本周提问趋势</div>
+            <div class="bar-chart" id="weekly-chart"></div>
+          </div>
+          <div class="side-card chart-card">
+            <div class="side-card-title">🎯 知识点掌握度</div>
+            <div class="mastery-list" id="mastery-list"></div>
+          </div>
+        </div>
+        <div class="report-insight side-card" id="report-insight"></div>
+      </section>
+
+      <!-- ===== 页面：设置 ===== -->
+      <section class="page" id="page-settings">
+        <div class="settings-wrap">
+          <div class="side-card">
+            <div class="side-card-title">⚙️ 通用设置</div>
+            <div class="setting-row">
+              <div><div class="setting-name">深色模式</div><div class="setting-desc">切换界面主题</div></div>
+              <label class="switch"><input type="checkbox" id="dark-switch"><span></span></label>
+            </div>
+            <div class="setting-row">
+              <div><div class="setting-name">RAG 检索过程可视化</div><div class="setting-desc">在答疑界面展示检索到的资料片段</div></div>
+              <label class="switch"><input type="checkbox" id="rag-switch" checked><span></span></label>
+            </div>
+            <div class="setting-row">
+              <div><div class="setting-name">回答模式</div><div class="setting-desc">演示模式：本地知识库检索生成（离线可用）</div></div>
+              <span class="tag tag-blue">演示模式</span>
+            </div>
+            <div class="setting-row">
+              <div><div class="setting-name">💎 会员状态</div><div class="setting-desc" id="member-desc">免费版 · 每日免费试用 5 次</div></div>
+              <button class="btn primary" id="member-toggle">升级 Pro</button>
+            </div>
+          </div>
+          <div class="side-card">
+            <div class="side-card-title">🔌 模型接入（可选）</div>
+            <div class="setting-desc mb">填写 OpenAI 兼容 API（如 DeepSeek / Moonshot）可切换为真实大模型生成回答。留空则使用本地演示引擎。</div>
+            <input type="text" class="text-input" id="api-key" placeholder="API Key（sk-…）">
+            <input type="text" class="text-input" id="api-base" placeholder="Base URL（默认 https://api.deepseek.com/v1）">
+            <input type="text" class="text-input" id="api-model" placeholder="模型名（默认 deepseek-chat）">
+            <button class="btn primary" id="api-save">保存配置</button>
+            <div class="api-status" id="api-status"></div>
+          </div>
+          <div class="side-card">
+            <div class="side-card-title">🗂️ 数据管理</div>
+            <div class="setting-row">
+              <div><div class="setting-name">本地数据</div><div class="setting-desc">错题本、答题记录、聊天记录存储于浏览器 localStorage</div></div>
+              <button class="btn danger-ghost" id="clear-data">清空本地数据</button>
+            </div>
+            <button class="btn ghost" id="export-data">导出学习数据 (JSON)</button>
+          </div>
+          <div class="side-card about-card">
+            <div class="side-card-title">ℹ️ 关于本项目</div>
+            <div class="about-text">
+              本项目为华中科技大学创客训练营「AI 智能助教：基于 RAG 技术的课程答疑助手」的网页版原型，按照选题答辩与中期汇报 PPT 的需求实现：
+              <ul>
+                <li>基于校本课程知识库（电路原理课件/教材）的 RAG 答疑，回答与课堂讲授逻辑一致</li>
+                <li>7×24 小时即时响应，消除「问不到」与「不敢问」的双重困境</li>
+                <li>结构化回答：【解题思路】【详细步骤】【知识点总结】</li>
+                <li>错题本拍照收录 + 相似题推荐，每日一题主动推送</li>
+                <li>Freemium 商业模式：基础免费 + Pro 增值服务</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<!-- 错题添加弹窗 -->
+<div class="modal-mask" id="wb-modal" hidden>
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">📸 添加错题</div>
+      <button class="modal-close" id="wb-modal-close">✕</button>
+    </div>
+    <div class="modal-body">
+      <label class="field-label">题目图片（拍照 / 上传）</label>
+      <div class="upload-zone" id="wb-upload">
+        <div class="upload-hint" id="wb-upload-hint">📷 点击拍照或上传题目图片</div>
+        <input type="file" id="wb-file" accept="image/*" hidden>
+        <img id="wb-preview" alt="" hidden>
+      </div>
+      <label class="field-label">题目内容</label>
+      <textarea class="text-input" id="wb-question" rows="3" placeholder="输入题目内容，例如：求图 3-2 所示电路中 2Ω 电阻两端的电压…"></textarea>
+      <label class="field-label">我的错误原因</label>
+      <textarea class="text-input" id="wb-reason" rows="2" placeholder="例如：忘记考虑电压源内阻 / 基尔霍夫定律列式符号错误…"></textarea>
+      <label class="field-label">关联知识点</label>
+      <select class="text-input" id="wb-topic"></select>
+      <div class="modal-actions">
+        <button class="btn ghost" id="wb-modal-cancel">取消</button>
+        <button class="btn primary" id="wb-modal-save">保存到错题本</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 错题详情弹窗 -->
+<div class="modal-mask" id="wb-detail-modal" hidden>
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">📖 错题详情</div>
+      <button class="modal-close" id="wb-detail-close">✕</button>
+    </div>
+    <div class="modal-body" id="wb-detail-body"></div>
+  </div>
+</div>
+
+<script src="js/knowledge-cs.js"></script>
+<script src="js/knowledge-chem.js"></script>
+<script src="js/knowledge-org.js"></script>
+<script src="js/knowledge-drawing.js"></script>
+<script src="js/knowledge-math.js"></script>
+<script src="js/knowledge-physics.js"></script>
+<script src="js/knowledge-elec.js"></script>
+<script src="js/knowledge-circuit.js"></script>
+<!-- 移动端底部导航 -->
+<nav class="mobile-nav" id="mobile-nav" aria-label="底部导航">
+  <button class="mnav-item active" data-page="chat"><span class="mnav-icon">💬</span><span class="mnav-label">答疑</span></button>
+  <button class="mnav-item" data-page="daily"><span class="mnav-icon">📅</span><span class="mnav-label">每日</span></button>
+  <button class="mnav-item" data-page="wrongbook"><span class="mnav-icon">📓</span><span class="mnav-label">错题</span></button>
+  <button class="mnav-item" data-page="knowledge"><span class="mnav-icon">📚</span><span class="mnav-label">知识库</span></button>
+  <button class="mnav-item" data-page="report"><span class="mnav-icon">📊</span><span class="mnav-label">报告</span></button>
+  <button class="mnav-item" data-page="settings"><span class="mnav-icon">⚙️</span><span class="mnav-label">设置</span></button>
+</nav>
+
+<!-- 升级 Pro 弹窗 -->
+<div class="modal-mask" id="upgrade-modal" hidden>
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">💎 升级 AI 助教 Pro</div>
+      <button class="modal-close" id="upgrade-close">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="upgrade-price">
+        <span class="up-price">¥9.9</span><span class="up-period">/月</span>
+        <div class="up-orig">原价 ¥19.9/月 · 年付 ¥99/年（立省 2 个月）</div>
+      </div>
+      <ul class="upgrade-benefits">
+        <li>♾️ 无限次 AI 答疑（免费版每日限 5 次）</li>
+        <li>📓 高级错题本：无限容量 + 智能错因分析</li>
+        <li>📊 个性化学习计划与专属学习报告</li>
+        <li>🔍 13 门学科知识库全量使用</li>
+      </ul>
+      <button class="btn primary" id="upgrade-confirm" style="width:100%;margin-top:10px">立即升级 ¥9.9/月（演示 · 模拟开通）</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/knowledge.js"></script>
+<script src="js/retrieval.js"></script>
+<script src="js/generator.js"></script>
+<script src="js/markdown.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
+
