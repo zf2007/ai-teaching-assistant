@@ -18,10 +18,12 @@ const COURSE_EXAMPLES = {
   chem: ["什么是缓冲溶液？", "怎么计算 pH？", "什么是吉布斯自由能？", "氧化还原反应怎么配平？"],
   orgchem: ["什么是芳香性？", "SN1 和 SN2 有什么区别？", "什么是同分异构？", "什么是顺反异构？"],
   polymer: ["缩聚和加聚有什么区别？", "什么是聚合度？", "高分子材料有哪些应用？", "热塑性塑料和热固性塑料有什么区别？"],
-  drawing: ["什么是剖视图？", "全剖半剖局部剖有什么区别？", "螺纹怎么标注？", "截交线怎么求？"]
+  drawing: ["什么是剖视图？", "全剖半剖局部剖有什么区别？", "螺纹怎么标注？", "截交线怎么求？"],
+  complex: ["什么是解析函数？", "柯西积分公式怎么用？", "怎么求留数？", "拉普拉斯变换怎么求逆变换？"],
+  algorithm: ["什么是动态规划？", "快速排序的时间复杂度是多少？", "Dijkstra 算法怎么用？", "什么是 NP 完全问题？"]
 };
 
-const COURSES = [CALCULUS_COURSE, LINEAR_ALGEBRA_COURSE, PROBABILITY_COURSE, PHYSICS_COURSE, ANALOG_COURSE, SIGNALS_COURSE, CIRCUIT_COURSE, PYTHON_COURSE, JAVA_COURSE, CHEM_COURSE, ORG_COURSE, POLYMER_COURSE, DRAWING_COURSE];
+const COURSES = [ALGO_COURSE, COMPLEX_COURSE, CALCULUS_COURSE, LINEAR_ALGEBRA_COURSE, PROBABILITY_COURSE, PHYSICS_COURSE, ANALOG_COURSE, SIGNALS_COURSE, CIRCUIT_COURSE, PYTHON_COURSE, JAVA_COURSE, CHEM_COURSE, ORG_COURSE, POLYMER_COURSE, DRAWING_COURSE];
 
 const Knowledge = (function () {
 
