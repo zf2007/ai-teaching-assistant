@@ -23,7 +23,25 @@ const COURSE_EXAMPLES = {
   algorithm: ["什么是动态规划？", "快速排序的时间复杂度是多少？", "Dijkstra 算法怎么用？", "什么是 NP 完全问题？"]
 };
 
-const COURSES = [ALGO_COURSE, COMPLEX_COURSE, CALCULUS_COURSE, LINEAR_ALGEBRA_COURSE, PROBABILITY_COURSE, PHYSICS_COURSE, ANALOG_COURSE, SIGNALS_COURSE, CIRCUIT_COURSE, PYTHON_COURSE, JAVA_COURSE, CHEM_COURSE, ORG_COURSE, POLYMER_COURSE, DRAWING_COURSE];
+/* 容错加载：某门课的知识库文件缺失时自动跳过，避免整个应用白屏 */
+const COURSE_DEFS = [
+  { n: "ALGO_COURSE", c: typeof ALGO_COURSE !== "undefined" ? ALGO_COURSE : null },
+  { n: "COMPLEX_COURSE", c: typeof COMPLEX_COURSE !== "undefined" ? COMPLEX_COURSE : null },
+  { n: "CALCULUS_COURSE", c: typeof CALCULUS_COURSE !== "undefined" ? CALCULUS_COURSE : null },
+  { n: "LINEAR_ALGEBRA_COURSE", c: typeof LINEAR_ALGEBRA_COURSE !== "undefined" ? LINEAR_ALGEBRA_COURSE : null },
+  { n: "PROBABILITY_COURSE", c: typeof PROBABILITY_COURSE !== "undefined" ? PROBABILITY_COURSE : null },
+  { n: "PHYSICS_COURSE", c: typeof PHYSICS_COURSE !== "undefined" ? PHYSICS_COURSE : null },
+  { n: "ANALOG_COURSE", c: typeof ANALOG_COURSE !== "undefined" ? ANALOG_COURSE : null },
+  { n: "SIGNALS_COURSE", c: typeof SIGNALS_COURSE !== "undefined" ? SIGNALS_COURSE : null },
+  { n: "CIRCUIT_COURSE", c: typeof CIRCUIT_COURSE !== "undefined" ? CIRCUIT_COURSE : null },
+  { n: "PYTHON_COURSE", c: typeof PYTHON_COURSE !== "undefined" ? PYTHON_COURSE : null },
+  { n: "JAVA_COURSE", c: typeof JAVA_COURSE !== "undefined" ? JAVA_COURSE : null },
+  { n: "CHEM_COURSE", c: typeof CHEM_COURSE !== "undefined" ? CHEM_COURSE : null },
+  { n: "ORG_COURSE", c: typeof ORG_COURSE !== "undefined" ? ORG_COURSE : null },
+  { n: "POLYMER_COURSE", c: typeof POLYMER_COURSE !== "undefined" ? POLYMER_COURSE : null },
+  { n: "DRAWING_COURSE", c: typeof DRAWING_COURSE !== "undefined" ? DRAWING_COURSE : null }
+];
+const COURSES = COURSE_DEFS.map(d => d.c).filter(Boolean);
 
 const Knowledge = (function () {
 
