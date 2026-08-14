@@ -93,11 +93,13 @@
                 <button class="chip" data-q="串联谐振的条件是什么？">串联谐振条件</button>
               </div>
               <div class="input-row">
+                <button class="photo-btn" id="photo-btn" title="拍照识图：拍照或上传题目图片，AI 自动识别并解答">📷</button>
                 <textarea id="chat-input" rows="1" placeholder="输入你的课程问题，AI 助教 7×24 小时在线…（Enter 发送 / Shift+Enter 换行）"></textarea>
                 <button class="send-btn" id="send-btn" title="发送">➤</button>
+                <input type="file" id="photo-file" accept="image/*" capture="environment" hidden>
               </div>
               <div class="input-hint">
-                <span>🔍 演示模式 · 本地 RAG 知识库检索</span>
+                <span>🔍 演示模式 · 本地 RAG · 📷 拍照识图</span>
                 <span class="rag-status"><span class="status-dot"></span>RAG 引擎在线</span>
               </div>
             </div>
@@ -231,6 +233,7 @@
                 <li>7×24 小时即时响应，消除「问不到」与「不敢问」的双重困境</li>
                 <li>结构化回答：【解题思路】【详细步骤】【知识点总结】</li>
                 <li>错题本拍照收录 + 相似题推荐，每日一题主动推送</li>
+                <li>📷 AI 拍照识图：拍照上传不会做的题目，自动识别文字并给出解题思路</li>
                 <li>Freemium 商业模式：基础免费 + Pro 增值服务</li>
               </ul>
             </div>
@@ -317,7 +320,7 @@
         <li>♾️ 无限次 AI 答疑（免费版每日限 5 次）</li>
         <li>📓 高级错题本：无限容量 + 智能错因分析</li>
         <li>📊 个性化学习计划与专属学习报告</li>
-        <li>🔍 13 门学科知识库全量使用</li>
+        <li>🔍 15 门学科知识库全量使用</li>
       </ul>
       <button class="btn primary" id="upgrade-confirm" style="width:100%;margin-top:10px">立即升级 ¥9.9/月（演示 · 模拟开通）</button>
     </div>
