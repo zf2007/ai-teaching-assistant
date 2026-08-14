@@ -136,6 +136,7 @@ const App = (function () {
     renderDaily();
     renderKnowledge();
     renderReport();
+    renderHotTags();
   }
 
   /* ---------------- 页面导航 ---------------- */
@@ -158,6 +159,7 @@ const App = (function () {
 
   /* ================= AI 答疑 ================= */
   let chatBusy = false;
+  let __ocrBusy = false; // AI 拍照识图：OCR 识别进行中
   const welcomeByCourse = {
     python: "我是 Python 程序设计 AI 助教，知识库来自《Python语言程序设计基础》教材，覆盖基本数据类型、控制结构、函数与代码复用、组合数据类型、字符串、文件与数据格式化、异常处理。",
     java: "我是 Java 程序设计 AI 助教，知识库来自《Java从入门到精通》与《Java编程思想》，覆盖语言基础、流程控制、数组、字符串、类与对象、封装、继承多态、接口抽象类、异常处理与集合框架。",
@@ -246,6 +248,7 @@ ${welcomeByCourse[c.id] || "基于校本课程知识库构建。"}
   function askAI(question, opts) {
     question = (question || "").trim();
     if (!question || chatBusy) return;
+    if (__ocrBusy) { appendMsg("ai", renderMarkdown("### ⏳ 正在识别图片…\n\n正在识别你上传的题目图片，请稍候片刻～"), null); return; }
 
     // 免费版试用次数检查
     if (!store.isPro) {
@@ -268,7 +271,7 @@ ${welcomeByCourse[c.id] || "基于校本课程知识库构建。"}
     store.chatByCourse[cid] = (store.chatByCourse[cid] || 0) + 1;
     saveStore();
 
-    appendMsg("user", escapeHtml(question));
+    if (!(opts && opts.skipUserAppend)) appendMsg("user", opts && opts.userHtml ? opts.userHtml : escapeHtml(question));
 
     const typingWrap = document.createElement("div");
     typingWrap.className = "msg ai";
@@ -728,6 +731,11 @@ ${context || "（未检索到相关资料）"}`;
     });
 
     $("#send-btn").addEventListener("click", () => sendFromInput());
+    $("#photo-btn").addEventListener("click", () => $("#photo-file").click());
+    $("#photo-file").addEventListener("change", e => {
+      handlePhotoFile(e.target.files[0]);
+      e.target.value = "";
+    });
     $("#chat-input").addEventListener("keydown", e => {
       if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendFromInput(); }
     });
@@ -886,6 +894,111 @@ ${context || "（未检索到相关资料）"}`;
     input.value = "";
     input.style.height = "auto";
     askAI(q);
+  }
+
+  /* ================= AI 拍照识图 ================= */
+  function handlePhotoFile(file) {
+    if (!file) return;
+    if (chatBusy || __ocrBusy) {
+      appendMsg("ai", renderMarkdown("### ⏳ 请稍候\n\n当前有回答正在生成，请等它完成后再拍照识图～"), null);
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const raw = ev.target.result;
+      resizeImage(raw, 1280, 1280).then(dataUrl => {
+        __ocrBusy = true;
+        const wrap = appendMsg("user",
+          `<div class="photo-msg"><img class="photo-img" src="${dataUrl}" alt="题目图片">` +
+          `<div class="ocr-status" id="ocr-status">📷 正在识别图片中的题目… <span id="ocr-pct"></span></div></div>`, null);
+        runOCR(dataUrl).then(text => {
+          __ocrBusy = false;
+          const status = wrap.querySelector("#ocr-status");
+          const cleaned = (text || "").replace(/\s*\n+\s*/g, "\n").replace(/[ \t]{2,}/g, " ").trim();
+          if (cleaned.length < 2) {
+            if (status) status.innerHTML = "⚠️ 未能识别出题目文字";
+            appendMsg("ai", renderMarkdown("### 🤔 图片识别失败\n\n没有从图片中识别到足够的题目文字。可以试试：\n\n1. **拍得更正、更清晰**，避免反光和倾斜；\n2. 裁剪后**只拍题目部分**；\n3. 直接 **手动输入题目** 提问。"), null);
+            return;
+          }
+          if (status) status.innerHTML = "📝 已识别题目，正在为你解答…";
+          const bubble = wrap.querySelector(".msg-bubble");
+          const ocrDiv = document.createElement("div");
+          ocrDiv.className = "ocr-text";
+          ocrDiv.textContent = "识别文字：" + cleaned;
+          bubble.appendChild(ocrDiv);
+          askAI(cleaned, { skipUserAppend: true });
+        }).catch(() => {
+          __ocrBusy = false;
+          const status = wrap.querySelector("#ocr-status");
+          if (status) status.innerHTML = "⚠️ 识别引擎加载失败";
+          appendMsg("ai", renderMarkdown("### 🌐 拍照识图需要联网\n\n文字识别引擎需要从网络加载（首次约 10~40MB，之后自动缓存）。\n\n请检查网络后**重试**，或直接 **手动输入题目** 提问。"), null);
+        });
+      });
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function resizeImage(dataUrl, maxW, maxH) {
+    return new Promise(resolve => {
+      const img = new Image();
+      img.onload = () => {
+        let w = img.width, h = img.height;
+        if (!w || !h) return resolve(dataUrl);
+        const scale = Math.min(1, maxW / w, maxH / h);
+        if (scale >= 1) return resolve(dataUrl);
+        w = Math.round(w * scale); h = Math.round(h * scale);
+        const cv = document.createElement("canvas");
+        cv.width = w; cv.height = h;
+        const ctx = cv.getContext("2d");
+        if (!ctx) return resolve(dataUrl);
+        ctx.drawImage(img, 0, 0, w, h);
+        try { resolve(cv.toDataURL("image/jpeg", 0.85)); } catch (e) { resolve(dataUrl); }
+      };
+      img.onerror = () => resolve(dataUrl);
+      img.src = dataUrl;
+    });
+  }
+
+  function loadTesseract() {
+    if (window.Tesseract) return Promise.resolve(window.Tesseract);
+    const urls = [
+      "https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js",
+      "https://unpkg.com/tesseract.js@5/dist/tesseract.min.js",
+      "https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.1.1/tesseract.min.js"
+    ];
+    return new Promise((resolve, reject) => {
+      let i = 0;
+      const tryLoad = () => {
+        if (i >= urls.length) return reject(new Error("no-cdn"));
+        const s = document.createElement("script");
+        s.src = urls[i++];
+        s.onload = () => window.Tesseract ? resolve(window.Tesseract) : tryLoad();
+        s.onerror = () => { s.remove(); tryLoad(); };
+        document.head.appendChild(s);
+      };
+      tryLoad();
+    });
+  }
+
+  function runOCR(dataUrl) {
+    return loadTesseract().then(T => {
+      const pctEl = $("#ocr-pct");
+      const setPct = p => { if (pctEl) pctEl.textContent = p; };
+      return withTimeout(T.recognize(dataUrl, "chi_sim+eng", {
+        logger: m => {
+          if (m.status === "recognizing text" && typeof m.progress === "number") {
+            setPct(Math.round(m.progress * 100) + "%");
+          }
+        }
+      }), 150000, "OCR timeout");
+    }).then(res => (res && res.data && res.data.text) || "");
+  }
+
+  function withTimeout(promise, ms, msg) {
+    return Promise.race([
+      promise,
+      new Promise((_, rej) => setTimeout(() => rej(new Error(msg || "timeout")), ms))
+    ]);
   }
 
   /* ---------------- 初始化 ---------------- */
