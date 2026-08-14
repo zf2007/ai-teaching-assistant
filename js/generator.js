@@ -90,6 +90,15 @@ const GENERATOR = (function () {
     md += `> 回答基于校本知识库检索生成，参考了 ${hits.length} 个资料片段（${uniqSrc.join("；")}）。`;
     md += `\n> 如有疑问或需要更详细的推导，可以继续追问，我会结合课堂讲授逻辑为你拆解。`;
 
+    /* —— 相关练习推荐 —— */
+    const course = Knowledge.getCourse(result.courseId);
+    const relatedQs = (course && course.questions || []).filter(q => q.topic === topic.id).slice(0, 2);
+    if (relatedQs.length) {
+      md += "\n### 📝 相关练习\n\n";
+      relatedQs.forEach((q, i) => { md += `${i + 1}. ${q.q}\n`; });
+      md += "\n> 试着做一下上面的题目巩固知识点，也可以在「每日一题」里继续练习～";
+    }
+
     return { markdown: md, topic, hits, related };
   }
 

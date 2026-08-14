@@ -112,6 +112,7 @@ const App = (function () {
   function resetChat() {
     $("#chat-messages").innerHTML = "";
     chatBusy = false;
+    try { localStorage.removeItem("aita_chat_" + store.currentCourse); } catch (e) {}
     updateSuggestions();
     welcomeMessage();
   }
@@ -177,6 +178,7 @@ const App = (function () {
 
   function welcomeMessage() {
     if ($("#chat-messages").children.length) return;
+    if (restoreChatHistory()) return;
     const c = curCourse();
     const md = `### 👋 你好，我是「${c.name}」AI 智能助教！
 
@@ -203,7 +205,20 @@ ${welcomeByCourse[c.id] || "基于校本课程知识库构建。"}
       </div>`;
     $("#chat-messages").appendChild(wrap);
     $("#chat-messages").scrollTop = $("#chat-messages").scrollHeight;
+    saveChatHistory();
     return wrap;
+  }
+
+  /* 聊天记录本地持久化（刷新不丢失） */
+  function saveChatHistory() {
+    try { localStorage.setItem("aita_chat_" + store.currentCourse, $("#chat-messages").innerHTML); } catch (e) {}
+  }
+  function restoreChatHistory() {
+    try {
+      const saved = localStorage.getItem("aita_chat_" + store.currentCourse);
+      if (saved && saved.trim()) { $("#chat-messages").innerHTML = saved; return true; }
+    } catch (e) {}
+    return false;
   }
 
   function renderSources(hits) {
@@ -551,7 +566,7 @@ ${context || "（未检索到相关资料）"}`;
       grid.innerHTML = `<div class="side-card" style="grid-column:1/-1;text-align:center;color:var(--text-3)">没有找到与「${escapeHtml(kw)}」相关的知识点，试试其他关键词～</div>`;
       return;
     }
-    grid.innerHTML = topics.map(t => {
+    const cardHtml = t => {
       const firstFact = t.facts[0] ? t.facts[0].text : "";
       return `
       <div class="kb-card" data-id="${t.id}">
@@ -570,7 +585,25 @@ ${context || "（未检索到相关资料）"}`;
           ${t.pitfall ? `<p style="font-size:12.5px;color:#c67b00;background:rgba(245,166,35,.1);padding:8px 10px;border-radius:8px;margin-top:8px">⚠️ ${escapeHtml(t.pitfall)}</p>` : ""}
         </div>
       </div>`;
-    }).join("");
+    };
+    if (kw) {
+      grid.innerHTML = topics.map(cardHtml).join("");
+    } else {
+      const groupOf = t => {
+        const m = (t.chapter || "").match(/^(第[0-9一二三四五六七八九十百零〇/]+章)/);
+        return m ? m[1] : (t.chapter || "其他");
+      };
+      const map = {};
+      topics.forEach(t => { const g = groupOf(t); (map[g] = map[g] || []).push(t); });
+      const chapters = Object.keys(map);
+      grid.innerHTML = chapters.map(ch => `
+        <div class="kb-chapter" style="grid-column:1/-1">
+          <span class="kb-chapter-title">📖 ${escapeHtml(ch)}</span>
+          <span class="kb-chapter-count">${map[ch].length} 个知识点</span>
+        </div>
+        ${map[ch].map(cardHtml).join("")}
+      `).join("");
+    }
     $$(".kb-card").forEach(card => {
       const head = card.querySelector(".kb-card-head");
       const btn = card.querySelector(".expand-btn");

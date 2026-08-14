@@ -555,3 +555,224 @@ const JAVA_COURSE = {
       explain: "Set 接口（HashSet）保证元素唯一不重复；List 有序可重复；Map 中 key 唯一但 value 可重复。" }
   ]
 };
+
+/* ===== 深化补充：Python ===== */
+PYTHON_COURSE.topics.push(
+  {
+    id: "py11", name: "面向对象编程", chapter: "面向对象程序设计",
+    keywords: ["类","对象","__init__","self","继承","多态","封装","方法","属性","实例"],
+    summary: "Python 面向对象用 class 定义类：__init__ 构造方法、self 指代实例；支持继承、方法重写与多态，是大型程序的基础。",
+    formula: "class 类名: def __init__(self, 参数): self.属性 = 参数；子类 class 子类(父类)",
+    facts: [
+      { text: "类定义：class 类名；创建对象 obj = 类名(参数)；__init__ 是构造方法（初始化实例），self 表示实例本身。", src: "Python 教材/程序设计" },
+      { text: "属性：self.属性名 定义实例属性；方法：def 方法名(self, ...)，调用 obj.方法()。", src: "Python 程序设计" },
+      { text: "继承：class 子类(父类)，子类继承父类方法与属性并可重写（多态）；super().__init__() 调用父类构造。", src: "Python 程序设计" },
+      { text: "封装：属性前加下划线 _x（约定私有）、__x（名称改写）；property 实现属性访问控制。", src: "Python 程序设计" }
+    ],
+    example: {
+      q: "定义一个 Student 类，含 name 属性和 say 方法。",
+      steps: ["class Student: def __init__(self, n): self.name = n; def say(self): print(self.name)。", "s = Student(\"张三\"); s.say() 输出 张三。"],
+      answer: "class + __init__ + self 属性"
+    },
+    pitfall: "所有实例方法第一个参数是 self；__init__ 不是构造函数而是初始化；子类重写方法后父类方法被覆盖（除非 super()）。"
+  },
+  {
+    id: "py12", name: "模块与常用标准库", chapter: "模块与常用库",
+    keywords: ["模块","import","from","sys","os","datetime","json","re","正则","异常"],
+    summary: "模块化把代码组织成可复用单元；常用标准库：sys/os 系统接口、datetime 时间、json 数据、re 正则表达式。",
+    formula: "import 模块；from 模块 import 函数；json.dumps/loads 序列化；re.match/re.search/re.findall",
+    facts: [
+      { text: "模块是 .py 文件，用 import 导入；__name__ == \"__main__\" 判断是否直接运行（可导入不执行测试代码）。", src: "Python 程序设计" },
+      { text: "sys 模块：sys.argv 命令行参数、sys.exit 退出；os 模块：os.getcwd、os.path 路径操作、os.environ 环境变量。", src: "Python 程序设计" },
+      { text: "datetime：datetime.now()、date/time/timedelta 时间运算与格式化（strftime）。", src: "Python 程序设计" },
+      { text: "re 正则：re.match（开头匹配）、re.search（任意位置）、re.findall（找全部）、re.sub（替换）；json 用 json.loads/dumps 读写 JSON。", src: "Python 程序设计" }
+    ],
+    example: {
+      q: "把字典 d 序列化为 JSON 字符串。",
+      steps: ["import json。", "s = json.dumps(d)。"],
+      answer: "json.dumps(d)"
+    },
+    pitfall: "import 与 from import 的作用域区别；正则贪婪匹配注意加 ? 非贪婪；json.dumps 中文默认转义，需 ensure_ascii=False。"
+  }
+);
+
+PYTHON_COURSE.questions.push(
+  { id: "pyq11", topic: "py11", level: "进阶", tag: "面向对象",
+    q: "Python 类中定义实例方法，第一个参数必须是（ ）。",
+    options: ["self", "cls", "this", "instance"],
+    answer: 0,
+    explain: "实例方法的第一个参数约定为 self，指代调用该方法的实例。" },
+  { id: "pyq12", topic: "py11", level: "进阶", tag: "继承",
+    q: "子类继承父类时用（ ）调用父类的 __init__。",
+    options: ["super().__init__()", "parent.__init__()", "self.__init__()", "直接调用类名()"],
+    answer: 0,
+    explain: "super().__init__(参数) 是调用父类构造方法的标准写法。" },
+  { id: "pyq13", topic: "py12", level: "基础", tag: "JSON",
+    q: "把字典转成 JSON 字符串的函数是（ ）。",
+    options: ["json.loads()", "json.dumps()", "json.load()", "json.dump()"],
+    answer: 1,
+    explain: "json.dumps 把对象序列化为字符串；loads 反序列化。" }
+);
+
+/* ===== 深化补充：Java ===== */
+JAVA_COURSE.topics.push(
+  {
+    id: "j13", name: "包装类与常用类库", chapter: "第8/9章 包装类与常用类",
+    keywords: ["包装类","Integer","自动装箱","自动拆箱","Math","日期","Random","比较器","Comparable"],
+    summary: "基本类型有对应包装类（Integer 等），支持自动装箱/拆箱；常用类 Math、Random、日期类，以及 Comparable/Comparator 排序。",
+    formula: "自动装箱 Integer i = 5；拆箱 int x = i；Math.max/abs/pow；Collections.sort(list)",
+    facts: [
+      { text: "包装类：Integer、Double、Character、Boolean 等对应 8 种基本类型；自动装箱（基本→包装）与自动拆箱（包装→基本）。", src: "Java从入门到精通 第8章" },
+      { text: "Integer 缓存：−128~127 范围内的 Integer 使用缓存，== 比较可能 true（超出范围 false），内容比较用 equals。", src: "Java从入门到精通 第8章" },
+      { text: "Math 类：Math.max/min/abs/random/pow/sqrt/floor/ceil；Random 类生成随机数（nextInt、nextDouble）。", src: "Java从入门到精通 第9章" },
+      { text: "排序：实现 Comparable 接口（compareTo）或使用 Comparator 比较器（Comparator.comparing(...)），配合 Collections.sort / Arrays.sort。", src: "Java从入门到精通" }
+    ],
+    example: {
+      q: "Integer a = 100; Integer b = 100; a == b 的结果是？",
+      steps: ["100 在 −128~127 缓存范围内。", "a 与 b 指向同一缓存对象。", "a == b 为 true（内容比较应优先 equals）。"],
+      answer: "true（缓存范围内）"
+    },
+    pitfall: "包装类 == 比较的是引用（缓存范围内例外），内容比较用 equals；自动拆箱可能出现 NullPointerException（包装为 null 时）。"
+  },
+  {
+    id: "j14", name: "多线程基础", chapter: "多线程",
+    keywords: ["线程","Thread","Runnable","run","start","synchronized","线程安全","生命周期","锁"],
+    summary: "多线程用继承 Thread 或实现 Runnable 创建；共享资源需 synchronized 同步保证线程安全；了解线程生命周期与常见问题（死锁）。",
+    formula: "new Thread(() -> {...}).start()；synchronized(对象){ 临界区 }",
+    facts: [
+      { text: "创建线程：继承 Thread 重写 run()，或实现 Runnable/使用 lambda（推荐），调用 start() 启动（不是 run()）。", src: "Java 多线程" },
+      { text: "线程生命周期：新建 → 就绪 → 运行 → 阻塞/等待 → 终止；sleep 让出 CPU、join 等待线程结束。", src: "Java 多线程" },
+      { text: "线程安全：多个线程同时访问共享可变数据需同步；synchronized 方法或代码块保证互斥；volatile 保证可见性。", src: "Java 多线程" },
+      { text: "常见问题：死锁（多个线程互相等待对方持有的锁）；用线程池（ExecutorService）管理线程更高效。", src: "Java 多线程" }
+    ],
+    example: {
+      q: "启动线程应该调用哪个方法？",
+      steps: ["创建 Thread 对象（含 run 逻辑）。", "调用 start() 启动线程（会执行 run()）。", "直接调 run() 只是普通方法调用，不新建线程。"],
+      answer: "start()"
+    },
+    pitfall: "start() 才创建新线程，run() 直接调用是同步执行；共享资源不同步产生数据竞争；多线程调试注意竞态条件。"
+  }
+);
+
+JAVA_COURSE.questions.push(
+  { id: "jq11", topic: "j13", level: "进阶", tag: "包装类",
+    q: "Integer a=100, b=100（自动装箱），a == b 结果为（ ）。",
+    options: ["true", "false", "编译错误", "运行时异常"],
+    answer: 0,
+    explain: "100 在 −128~127 缓存范围，a、b 指向同一对象，== 为 true。" },
+  { id: "jq12", topic: "j14", level: "基础", tag: "线程",
+    q: "启动一个新线程应该调用（ ）。",
+    options: ["run()", "start()", "execute()", "begin()"],
+    answer: 1,
+    explain: "start() 创建并启动新线程（执行 run）；直接调 run() 是普通调用。" },
+  { id: "jq13", topic: "j14", level: "进阶", tag: "线程安全",
+    q: "保证多个线程互斥访问共享资源的机制是（ ）。",
+    options: ["synchronized", "final", "static", "abstract"],
+    answer: 0,
+    explain: "synchronized 关键字实现同步互斥，保证线程安全。" }
+);
+
+/* ===== 自动搜索扩充：Python + Java ===== */
+PYTHON_COURSE.topics.push(
+  {
+    id: "py13", name: "迭代器与生成器", chapter: "第6/9章 组合数据类型与计算生态",
+    keywords: ["迭代器","生成器","yield","惰性求值","可迭代对象","迭代器协议","生成器表达式","next"],
+    summary: "迭代器按需逐个产生元素，生成器用 yield 实现惰性求值，适合处理大数据流，避免一次性占用大量内存。",
+    formula: "生成器函数含 yield：def gen(): for i in range(n): yield i*i；生成器表达式 (x*x for x in range(10))",
+    facts: [
+      { text: "可迭代对象实现了 __iter__ 方法，迭代器实现了 __iter__ 与 __next__；for 循环底层就是不断调用 next() 直到 StopIteration。", src: "Python 程序设计教材 组合数据类型" },
+      { text: "列表、元组、字典、集合、字符串都是可迭代对象；iter() 获得迭代器，next() 取下一个元素。", src: "Python 程序设计教材 组合数据类型" },
+      { text: "生成器函数：包含 yield 关键字，调用时返回生成器对象而不立即执行，每次 next() 执行到 yield 并暂停，实现惰性求值。", src: "Python 程序设计教材" },
+      { text: "生成器表达式语法与列表推导式相似但用圆括号，一次只产生一个元素，节省内存；适合大数据、无限序列。", src: "Python 程序设计教材" }
+    ],
+    example: {
+      q: "生成器对象与列表的主要区别是（ ）。",
+      steps: ["生成器惰性求值，逐个产生元素。", "不一次性把全部元素放入内存。"],
+      answer: "惰性求值、省内存"
+    },
+    pitfall: "生成器只能迭代一次，迭代完即耗尽；yield 与 return 不同，return 会结束生成器；生成器没有 len() 和下标访问。"
+  },
+  {
+    id: "py14", name: "数据分析与第三方库生态", chapter: "第9章 Python 计算生态概览",
+    keywords: ["numpy","pandas","matplotlib","数据分析","数据清洗","数据可视化","科学计算","Series","DataFrame"],
+    summary: "Python 计算生态以 numpy（数值计算）、pandas（表格数据处理）、matplotlib（可视化）为核心，支撑数据分析全流程。",
+    formula: "import numpy as np; import pandas as pd; import matplotlib.pyplot as plt；pd.read_csv() 读数据，df.groupby() 分组聚合",
+    facts: [
+      { text: "numpy 提供多维数组 ndarray 与向量化运算，比 Python 列表数值计算快得多；支持广播、矩阵运算与随机数。", src: "Python 教材 计算生态" },
+      { text: "pandas 核心数据结构：Series（一维带标签数组）与 DataFrame（二维表格），支持缺失值处理、分组聚合、合并连接。", src: "Python 教材 计算生态" },
+      { text: "matplotlib 绘制折线、柱状、散点、饼图等；pyplot 接口 plt.plot()、plt.show()，可自定义标题、标签、图例。", src: "Python 教材 计算生态" },
+      { text: "数据分析流程：数据读取（CSV/Excel/数据库）→ 清洗（缺失值、重复、类型转换）→ 分析（统计、分组、透视）→ 可视化与报告。", src: "Python 教材 计算生态" }
+    ],
+    example: {
+      q: "pandas 中二维带标签的表格数据结构是（ ）。",
+      steps: ["Series 是一维。", "DataFrame 是二维表格数据结构。"],
+      answer: "DataFrame"
+    },
+    pitfall: "numpy 数组运算要区分元素级运算与矩阵乘法（np.dot/@）；pandas 修改视图可能触发 SettingWithCopyWarning；matplotlib 中文显示需设置字体。"
+  }
+);
+
+PYTHON_COURSE.questions.push(
+  { id: "pyq14", topic: "py13", level: "基础", tag: "生成器",
+    q: "生成器函数与普通函数的关键区别是（ ）。",
+    options: ["含 yield 关键字", "必须返回列表", "不能有参数", "只能用于字符串"],
+    answer: 0,
+    explain: "含 yield 的函数是生成器函数，调用返回生成器对象，惰性求值。" },
+  { id: "pyq15", topic: "py14", level: "基础", tag: "数据分析",
+    q: "pandas 中二维表格数据结构是（ ）。",
+    options: ["DataFrame", "Series", "ndarray", "list"],
+    answer: 0,
+    explain: "DataFrame 是二维带标签表格，Series 是一维。" }
+);
+
+JAVA_COURSE.topics.push(
+  {
+    id: "j15", name: "IO 流与文件操作", chapter: "第17章 IO 流",
+    keywords: ["IO流","字节流","字符流","FileInputStream","FileOutputStream","BufferedReader","序列化","文件读写"],
+    summary: "Java IO 按流向与处理单位分为字节流和字符流，用装饰器包装缓冲流提升效率，序列化实现对象持久化。",
+    formula: "字节流 InputStream/OutputStream；字符流 Reader/Writer；包装：new BufferedReader(new FileReader(路径))",
+    facts: [
+      { text: "IO 流按方向分为输入流与输出流，按单位分为字节流（InputStream/OutputStream）与字符流（Reader/Writer）。", src: "Java 教材 IO 流" },
+      { text: "文件读写：FileInputStream/FileOutputStream 处理字节；FileReader/FileWriter 处理字符；用 try-with-resources 自动关闭资源。", src: "Java 教材 IO 流" },
+      { text: "缓冲流 BufferedInputStream/BufferedReader 减少底层读写次数提升性能；字符流常用 readLine() 按行读取。", src: "Java 教材 IO 流" },
+      { text: "对象序列化：实现 Serializable 接口，用 ObjectOutputStream/ObjectInputStream 读写对象，transient 字段不序列化。", src: "Java 教材 IO 流" }
+    ],
+    example: {
+      q: "按行读取文本文件应使用哪个类？",
+      steps: ["字符流更适合文本。", "BufferedReader 提供 readLine() 按行读取。"],
+      answer: "BufferedReader"
+    },
+    pitfall: "字节流读中文可能乱码，文本用字符流并指定编码；用完流必须关闭（try-with-resources）；序列化要声明 serialVersionUID。"
+  },
+  {
+    id: "j16", name: "网络编程与 JDBC 基础", chapter: "网络编程/JDBC",
+    keywords: ["Socket","ServerSocket","TCP","UDP","URL","JDBC","数据库连接","PreparedStatement","ResultSet"],
+    summary: "Java 用 Socket/ServerSocket 实现 TCP 通信，用 JDBC 统一访问数据库：加载驱动、建立连接、执行 SQL、处理结果集。",
+    formula: "客户端 new Socket(host, port)；服务端 new ServerSocket(port).accept()；JDBC：Connection → Statement/PreparedStatement → ResultSet",
+    facts: [
+      { text: "TCP 编程：服务端 ServerSocket 监听端口并 accept()，客户端 Socket 连接，通过输入输出流交换数据。", src: "Java 教材 网络编程" },
+      { text: "UDP 编程用 DatagramSocket/DatagramPacket，无连接、面向报文；HTTP 客户端可用 URL/HttpURLConnection 或 HttpClient。", src: "Java 教材 网络编程" },
+      { text: "JDBC 访问数据库四步：加载驱动（Class.forName）、DriverManager.getConnection 建立连接、Statement/PreparedStatement 执行 SQL、ResultSet 处理结果。", src: "Java 教材 JDBC" },
+      { text: "PreparedStatement 预编译可防 SQL 注入且性能更好；事务用 Connection 的 setAutoCommit(false)、commit()、rollback()。", src: "Java 教材 JDBC" }
+    ],
+    example: {
+      q: "JDBC 中防止 SQL 注入应使用（ ）。",
+      steps: ["PreparedStatement 预编译参数化 SQL。", "参数用 ? 占位符绑定，避免拼接。"],
+      answer: "PreparedStatement"
+    },
+    pitfall: "网络读写要处理 IOException 并考虑多线程（每连接一线程/线程池）；JDBC 驱动要先加载、用完关闭连接；连接池避免频繁建连。"
+  }
+);
+
+JAVA_COURSE.questions.push(
+  { id: "jq14", topic: "j15", level: "基础", tag: "IO流",
+    q: "按行读取文本文件最合适的类是（ ）。",
+    options: ["BufferedReader", "FileInputStream", "ObjectOutputStream", "DataInputStream"],
+    answer: 0,
+    explain: "BufferedReader.readLine() 按行读取文本。" },
+  { id: "jq15", topic: "j16", level: "进阶", tag: "JDBC",
+    q: "JDBC 中防 SQL 注入应使用（ ）。",
+    options: ["PreparedStatement", "Statement", "String 拼接", "ResultSet"],
+    answer: 0,
+    explain: "PreparedStatement 参数化查询，预编译防止 SQL 注入。" }
+);
