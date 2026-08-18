@@ -33,6 +33,9 @@
       <button class="nav-item" data-page="knowledge">
         <span class="nav-icon">📚</span><span>课程知识库</span>
       </button>
+      <button class="nav-item" data-page="custom">
+        <span class="nav-icon">🎓</span><span>我的教材</span>
+      </button>
       <button class="nav-item" data-page="report">
         <span class="nav-icon">📊</span><span>学习报告</span>
       </button>
@@ -86,6 +89,7 @@
           <div class="chat-main">
             <div class="chat-messages" id="chat-messages"></div>
             <div class="chat-inputbar">
+              <div class="custom-banner" id="custom-banner" hidden></div>
               <div class="suggestions" id="suggestions">
                 <button class="chip" data-q="什么是基尔霍夫电压定律？">什么是基尔霍夫电压定律？</button>
                 <button class="chip" data-q="用戴维南定理求电路中的电流">戴维南定理怎么求电流？</button>
@@ -169,6 +173,19 @@
         <div class="kb-grid" id="kb-grid"></div>
       </section>
 
+      <!-- ===== 页面：我的教材（个性化 AI） ===== -->
+      <section class="page" id="page-custom">
+        <div class="custom-head">
+          <div class="page-title">🎓 我的教材</div>
+          <button class="btn primary" id="custom-add-btn">＋ 上传教材 / 资料</button>
+        </div>
+        <div class="custom-intro side-card">
+          <div class="side-card-title">✨ 个性化 AI 助教</div>
+          <div class="custom-intro-text">上传你们学校的<b>教材或课程资料</b>，AI 会<b>优先按你的资料内容</b>来回答，让每个学校都拥有专属助教。资料只保存在<b>你的浏览器本地</b>（IndexedDB），不会上传到任何服务器。</div>
+          <div class="custom-hint">📌 支持 PDF / TXT / Markdown / Word（≤40MB）。文字版 PDF 效果最佳；扫描版图片 PDF 请先用 OCR 转成文字，或直接上传 TXT。</div>
+        </div>
+        <div class="custom-grid" id="custom-grid"></div>
+      </section>
       <!-- ===== 页面：学习报告 ===== -->
       <section class="page" id="page-report">
         <div class="report-grid" id="report-grid"></div>
@@ -284,6 +301,32 @@
   </div>
 </div>
 
+<!-- 上传教材弹窗 -->
+<div class="modal-mask" id="custom-modal" hidden>
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">📤 上传教材 / 资料</div>
+      <button class="modal-close" id="custom-close">✕</button>
+    </div>
+    <div class="modal-body">
+      <label class="field-label">关联学科</label>
+      <select class="text-input" id="custom-course"></select>
+      <label class="field-label">选择文件</label>
+      <div class="upload-zone" id="custom-upload">
+        <div class="upload-hint" id="custom-upload-hint">📄 点击选择 PDF / TXT / Markdown / DOCX 文件（≤40MB）</div>
+        <input type="file" id="custom-file" accept=".pdf,.txt,.md,.markdown,.docx,.text" hidden>
+      </div>
+      <div class="custom-progress" id="custom-progress" hidden>
+        <div class="custom-progress-text" id="custom-progress-text">正在解析…</div>
+        <div class="trial-track"><div class="trial-fill" id="custom-progress-fill" style="width:0%"></div></div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn ghost" id="custom-cancel">取消</button>
+        <button class="btn primary" id="custom-save" disabled>开始上传</button>
+      </div>
+    </div>
+  </div>
+</div>
 <script src="js/knowledge-cs.js"></script>
 <script src="js/knowledge-chem.js"></script>
 <script src="js/knowledge-org.js"></script>
@@ -300,6 +343,7 @@
   <button class="mnav-item" data-page="daily"><span class="mnav-icon">📅</span><span class="mnav-label">每日</span></button>
   <button class="mnav-item" data-page="wrongbook"><span class="mnav-icon">📓</span><span class="mnav-label">错题</span></button>
   <button class="mnav-item" data-page="knowledge"><span class="mnav-icon">📚</span><span class="mnav-label">知识库</span></button>
+  <button class="mnav-item" data-page="custom"><span class="mnav-icon">🎓</span><span class="mnav-label">教材</span></button>
   <button class="mnav-item" data-page="report"><span class="mnav-icon">📊</span><span class="mnav-label">报告</span></button>
   <button class="mnav-item" data-page="settings"><span class="mnav-icon">⚙️</span><span class="mnav-label">设置</span></button>
 </nav>
@@ -329,6 +373,7 @@
 
 <script src="js/knowledge.js"></script>
 <script src="js/retrieval.js"></script>
+<script src="js/custom.js"></script>
 <script src="js/generator.js"></script>
 <script src="js/markdown.js"></script>
 <script src="js/app.js"></script>
