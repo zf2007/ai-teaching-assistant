@@ -136,6 +136,7 @@ const App = (function () {
     renderDaily();
     renderKnowledge();
     renderReport();
+    renderCustom();
     renderHotTags();
   }
 
@@ -148,13 +149,14 @@ const App = (function () {
     $$(".page").forEach(p => p.classList.remove("active"));
     const el = $("#page-" + page);
     if (el) el.classList.add("active");
-    const titles = { chat: "AI 答疑", daily: "每日一题", wrongbook: "错题本", knowledge: "课程知识库", report: "学习报告", settings: "设置" };
+    const titles = { chat: "AI 答疑", daily: "每日一题", wrongbook: "错题本", knowledge: "课程知识库", custom: "我的教材", report: "学习报告", settings: "设置" };
     $("#topbar-title").textContent = titles[page] || "AI 答疑";
     if (page === "chat") { welcomeMessage(); $("#chat-input").focus(); }
     if (page === "knowledge") renderKnowledge();
     if (page === "report") renderReport();
     if (page === "wrongbook") renderWrongbook();
     if (page === "daily") renderDaily();
+    if (page === "custom") renderCustom();
   }
 
   /* ================= AI 答疑 ================= */
@@ -182,7 +184,7 @@ const App = (function () {
     if ($("#chat-messages").children.length) return;
     if (restoreChatHistory()) return;
     const c = curCourse();
-    const md = `### 👋 你好，我是「${c.name}」AI 智能助教！
+    let md = `### 👋 你好，我是「${c.name}」AI 智能助教！
 
 ${welcomeByCourse[c.id] || "基于校本课程知识库构建。"}
 
@@ -192,6 +194,9 @@ ${welcomeByCourse[c.id] || "基于校本课程知识库构建。"}
 - 作业求助：*「这道题我不会做」*
 
 每条回答都会给出【解题思路】【详细步骤】【知识点总结】，并在右侧展示 RAG 检索过程与引用来源。`;
+    if (CustomMaterials.hasFor(c.id)) {
+      md += `\n\n> 🎓 **已接入你的教材**：${CustomMaterials.namesFor(c.id).map(n => "《" + n + "》").join("、")}，提问时 AI 会优先按你的教材内容回答。`;
+    }
     appendMsg("ai", renderMarkdown(md), `<span>🤖 ${c.icon} ${c.name} AI 助教</span><span>·</span><span>基于校本知识库</span>`);
   }
 
@@ -280,6 +285,7 @@ ${welcomeByCourse[c.id] || "基于校本课程知识库构建。"}
     $("#chat-messages").scrollTop = $("#chat-messages").scrollHeight;
 
     const result = RETRIEVAL.retrieve(question, { topK: 4, course: cid });
+    const customHits = CustomMaterials.search(question, cid, 3);
 
     if (result.topics.length) {
       const t = result.topics[0].topic;
@@ -291,18 +297,22 @@ ${welcomeByCourse[c.id] || "基于校本课程知识库构建。"}
     const finish = (markdown, hits, topicName) => {
       setTimeout(() => {
         typingWrap.remove();
-        const html = renderMarkdown(markdown) + renderSources(hits);
+        const html = renderMarkdown(markdown) + renderSources(hits) + renderCustomSources(customHits);
         const c = curCourse();
         const meta = `<span>🤖 ${c.icon} ${c.name} AI 助教</span><span>·</span><span>${result.elapsedMs + 42}ms</span>`;
         appendMsg("ai", html, meta);
-        updateRagFlow(GENERATOR.buildRagFlow(result, { topic: topicName ? { name: topicName } : null, type: result.type }));
+        const flow = GENERATOR.buildRagFlow(result, { topic: topicName ? { name: topicName } : null, type: result.type });
+        if (customHits.length) {
+          flow.push({ step: "⑤ 个性化教材检索", detail: "在你的教材中检索到 " + customHits.length + " 个相关片段（优先参考）", time: "6ms", hit: true, srcs: customHits.map(h => h.frag.src) });
+        }
+        updateRagFlow(flow);
         chatBusy = false;
       }, opts && opts.noDelay ? 0 : 380 + Math.random() * 400);
     };
 
     const cfg = store.api;
     if (cfg && cfg.key) {
-      callLLM(cfg, question, result).then(llmMd => {
+      callLLM(cfg, question, result, customHits).then(llmMd => {
         if (llmMd) finish(llmMd, result.hits, result.topics[0] && result.topics[0].topic.name);
         else finishLocal();
       }).catch(() => finishLocal());
@@ -312,21 +322,29 @@ ${welcomeByCourse[c.id] || "基于校本课程知识库构建。"}
 
     function finishLocal() {
       const answer = GENERATOR.generate(result);
-      finish(answer.markdown, answer.hits, answer.topic && answer.topic.name);
+      let md = answer.markdown;
+      if (customHits.length) {
+        md = result.topics.length ? md + customAnswerBlock(customHits) : buildCustomAnswer(question, customHits);
+      }
+      finish(md, answer.hits, answer.topic && answer.topic.name);
     }
   }
 
-  async function callLLM(cfg, question, result) {
+  async function callLLM(cfg, question, result, customHits) {
     const base = (cfg.base || "https://api.deepseek.com/v1").replace(/\/+$/, "");
     const model = cfg.model || "deepseek-chat";
     const context = result.hits.map(h => `[资料：${h.frag.src}]\n${h.frag.text}`).join("\n\n");
+    let customContext = "";
+    if (customHits && customHits.length) {
+      customContext = "\n\n===== 用户上传的个性化教材资料（优先参考） =====\n" + customHits.map(h => `[${h.frag.src}]\n${h.frag.text}`).join("\n\n");
+    }
     const system = `你是「${result.courseName}」AI 智能助教，基于 RAG 技术为大学生提供课程答疑。
 你的回答必须严格基于下面提供的校本课程知识库资料，与课堂讲授逻辑保持一致。
 回答须结构化，包含：【解题思路】【详细步骤】【知识点总结】三个部分，使用 Markdown 格式。
 如果资料不足以回答问题，请明确说明并给出引导，不要编造。
 
 ===== 校本课程知识库资料 =====
-${context || "（未检索到相关资料）"}`;
+${context || "（未检索到相关资料）"}${customContext}`;
     const res = await fetch(base + "/chat/completions", {
       method: "POST",
       headers: { "Content-Type": "application/json", "Authorization": "Bearer " + cfg.key },
@@ -752,6 +770,26 @@ ${context || "（未检索到相关资料）"}`;
       const tag = e.target.closest(".hot-tag");
       if (tag) { $("#chat-input").value = "请解释：" + tag.textContent; sendFromInput(); }
     });
+    $("#custom-add-btn").addEventListener("click", openCustomModal);
+    $("#custom-upload").addEventListener("click", () => $("#custom-file").click());
+    $("#custom-file").addEventListener("change", e => {
+      const f = e.target.files[0];
+      window.__customFile = f || null;
+      const hint = $("#custom-upload-hint");
+      const save = $("#custom-save");
+      if (f) {
+        hint.textContent = "📄 已选择：" + f.name + "（" + CustomMaterials.fmtSize(f.size) + "）";
+        hint.hidden = false;
+        save.disabled = false;
+      } else {
+        save.disabled = true;
+      }
+    });
+    $("#custom-save").addEventListener("click", doCustomUpload);
+    $("#custom-close").addEventListener("click", () => closeModal("custom-modal"));
+    $("#custom-cancel").addEventListener("click", () => closeModal("custom-modal"));
+    $("#custom-banner").addEventListener("click", () => navigate("custom"));
+
     $("#chat-messages").addEventListener("click", e => {
       const chip = e.target.closest(".src-chip");
       if (chip) {
@@ -880,6 +918,131 @@ ${context || "（未检索到相关资料）"}`;
     });
   }
 
+  /* ================= 个性化教材（我的教材） ================= */
+  function courseNameOf(cid) {
+    const c = Knowledge.getCourse(cid);
+    return c ? c.name : "未知学科";
+  }
+  function updateCustomBanner() {
+    const b = $("#custom-banner");
+    if (!b) return;
+    const c = curCourse();
+    const mats = CustomMaterials.forCourse(c.id);
+    if (mats.length) {
+      b.hidden = false;
+      b.innerHTML = `🎓 已接入你的教材：<b>${mats.map(m => "《" + escapeHtml(m.name) + "》").join("、")}</b> · AI 将优先按你的教材回答 <span class="custom-banner-go">管理 →</span>`;
+    } else {
+      b.hidden = true;
+    }
+  }
+  function renderCustom() {
+    const grid = $("#custom-grid");
+    if (!grid) return;
+    const all = CustomMaterials.all();
+    if (!all.length) {
+      grid.innerHTML = `<div class="custom-empty">
+        <div class="empty-icon">🎓</div>
+        <div>还没有上传教材。上传你们学校的教材或课程资料后，AI 就会优先按你的资料回答。</div>
+        <button class="btn primary" id="custom-empty-add">＋ 上传第一份教材</button>
+      </div>`;
+      const eb = $("#custom-empty-add");
+      if (eb) eb.addEventListener("click", openCustomModal);
+      updateCustomBanner();
+      return;
+    }
+    const c = curCourse();
+    grid.innerHTML = all.map(m => `
+      <div class="custom-card ${m.courseId === c.id ? "active" : ""}">
+        <div class="custom-card-head">
+          <div class="custom-card-icon">📘</div>
+          <div class="custom-card-info">
+            <div class="custom-card-title">${escapeHtml(m.name)}</div>
+            <div class="custom-card-sub">${escapeHtml(courseNameOf(m.courseId))} · ${CustomMaterials.fmtSize(m.size)} · ${m.chars} 字 · ${m.frags.length} 个片段</div>
+          </div>
+          <button class="custom-del" data-id="${m.id}" title="删除这份教材">🗑️</button>
+        </div>
+        <div class="custom-card-foot">
+          <span class="tag ${m.courseId === c.id ? "tag-green" : ""}">${m.courseId === c.id ? "✅ 当前学科正在使用" : "关联：" + escapeHtml(courseNameOf(m.courseId))}</span>
+          <span class="custom-date">${new Date(m.createdAt).toLocaleDateString()}</span>
+        </div>
+      </div>`).join("");
+    $$(".custom-del").forEach(btn => btn.addEventListener("click", async e => {
+      e.stopPropagation();
+      const id = btn.dataset.id;
+      if (!confirm("确定删除这份教材资料吗？删除后 AI 将不再按它回答。")) return;
+      await CustomMaterials.remove(id);
+      renderCustom();
+      renderAll();
+    }));
+    updateCustomBanner();
+  }
+  function openCustomModal() {
+    const sel = $("#custom-course");
+    sel.innerHTML = COURSES.map(c => `<option value="${c.id}" ${c.id === store.currentCourse ? "selected" : ""}>${c.icon} ${escapeHtml(c.name)}</option>`).join("");
+    window.__customFile = null;
+    const f = $("#custom-file");
+    f.value = "";
+    $("#custom-upload-hint").textContent = "📄 点击选择 PDF / TXT / Markdown / DOCX 文件（≤40MB）";
+    $("#custom-upload-hint").hidden = false;
+    $("#custom-progress").hidden = true;
+    $("#custom-progress-fill").style.width = "0%";
+    $("#custom-save").disabled = true;
+    $("#custom-modal").hidden = false;
+  }
+  async function doCustomUpload() {
+    const file = window.__customFile;
+    if (!file) return;
+    const courseId = $("#custom-course").value;
+    const courseName = courseNameOf(courseId);
+    const save = $("#custom-save");
+    const prog = $("#custom-progress");
+    const progText = $("#custom-progress-text");
+    const fill = $("#custom-progress-fill");
+    save.disabled = true;
+    prog.hidden = false;
+    progText.textContent = "正在解析「" + file.name + "」…";
+    try {
+      const m = await CustomMaterials.add(file, courseId, courseName, (cur, total) => {
+        progText.textContent = "正在解析「" + file.name + "」… " + Math.round(cur / total * 100) + "%";
+        fill.style.width = Math.round(cur / total * 100) + "%";
+      });
+      closeModal("custom-modal");
+      renderCustom();
+      renderAll();
+      alert("✅ 已接入教材《" + m.name + "》\n\n关联学科：" + courseName + "\n提取 " + m.chars + " 字 · " + m.frags.length + " 个知识片段\n\n现在提问该学科的问题，AI 会优先按这份教材回答。");
+    } catch (e) {
+      progText.textContent = "⚠️ " + e.message;
+      save.disabled = false;
+    }
+  }
+  function customAnswerBlock(hits) {
+    let md = "\n\n---\n\n### 📖 来自你的教材\n\n";
+    hits.forEach(h => {
+      md += "> **" + h.frag.src + "**\n>\n";
+      md += h.frag.text.split("\n").map(l => "> " + l).join("\n") + "\n\n";
+    });
+    md += "> 💡 以上内容来自你上传的教材资料，AI 已优先参考它回答。";
+    return md;
+  }
+  function buildCustomAnswer(q, hits) {
+    let md = "### 📖 根据你的教材回答\n\n";
+    md += "我在你上传的教材中找到了与「" + q + "」相关的内容：\n\n";
+    hits.forEach(h => {
+      md += "> **" + h.frag.src + "**\n>\n";
+      md += h.frag.text.split("\n").map(l => "> " + l).join("\n") + "\n\n";
+    });
+    md += "### 🎯 下一步\n\n";
+    md += "1. 结合上面的教材原文理解相关概念与步骤。\n";
+    md += "2. 如果还有不理解的地方，可以直接追问，我会继续按你的教材讲解。\n\n";
+    md += "> 💡 你还可以上传更多教材章节，覆盖范围越全，回答越贴合你的课堂。";
+    return md;
+  }
+  function renderCustomSources(hits) {
+    if (!hits || !hits.length) return "";
+    const uniq = [...new Set(hits.map(h => h.frag.src))];
+    return `<div class="msg-sources">${uniq.map(s =>
+      `<span class="src-chip custom-src">🎓 ${escapeHtml(s)}</span>`).join("")}</div>`;
+  }
   function renderHotTags() {
     const box = $("#hot-tags");
     if (!box) return;
@@ -1002,7 +1165,8 @@ ${context || "（未检索到相关资料）"}`;
   }
 
   /* ---------------- 初始化 ---------------- */
-  function init() {
+  async function init() {
+    await CustomMaterials.init();
     loadStore();
     const savedDark = localStorage.getItem("aita_dark") === "1";
     applyTheme(savedDark);
@@ -1012,6 +1176,7 @@ ${context || "（未检索到相关资料）"}`;
     navigate("chat");
     renderDailyStats();
     updateTrialUI();
+    updateCustomBanner();
   }
 
   document.addEventListener("DOMContentLoaded", init);
